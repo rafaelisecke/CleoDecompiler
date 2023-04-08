@@ -1,0 +1,314 @@
+
+
+{$CLEO .cs}
+
+const
+
+    packAnim        = "D4FEXS"    // animation package
+        liftCar     = "lift_car"    // Lift Car animation
+        IDLEHold    = "h_holdIDLE"  // IDLE hold animation
+        ThrowAnim   = "h_throw"     // throw car animation   
+
+:catchThrowCars
+    {$I include/forallcars}
+    if 
+    056E:   car veh defined                                    
+    then
+        0441: 2@ = car veh model
+        // back
+        07E4: get_model 2@ dimensions_cornerA_to 4@ 5@ 6@ dimensions_cornerB_to 7@ 8@ 9@
+        0407: store_coords_to 7@ 8@ 9@ from_car veh with_offset 0.0 5@ 0.0
+        00A0: store_actor $PLAYER_ACTOR position_to 4@ 5@ 6@   
+        050A: 3@ = distance_between_XYZ 4@ 5@ 6@ and_XYZ 7@ 8@ 9@
+        if  2.0 > 3@                                               
+        then
+            //0ACA: show_text_box "car found1"
+            break
+        end
+        //front
+        07E4: get_model 2@ dimensions_cornerA_to 4@ 5@ 6@ dimensions_cornerB_to 7@ 8@ 9@
+        0013: 5@ *= -1.0
+        0407: store_coords_to 7@ 8@ 9@ from_car veh with_offset 0.0 5@ 0.0
+        00A0: store_actor $PLAYER_ACTOR position_to 4@ 5@ 6@   
+        050A: 3@ = distance_between_XYZ 4@ 5@ 6@ and_XYZ 7@ 8@ 9@
+        if  2.0 > 3@                                               
+        then
+            //0ACA: show_text_box "car found2"
+            break
+        end
+        //left
+        07E4: get_model 2@ dimensions_cornerA_to 4@ 5@ 6@ dimensions_cornerB_to 7@ 8@ 9@
+        0407: store_coords_to 7@ 8@ 9@ from_car veh with_offset 4@ 0.0 0.0
+        00A0: store_actor $PLAYER_ACTOR position_to 4@ 5@ 6@   
+        050A: 3@ = distance_between_XYZ 4@ 5@ 6@ and_XYZ 7@ 8@ 9@
+        if  2.5 > 3@                                               
+        then
+            //0ACA: show_text_box "car found3"
+            break
+        end
+        //right
+        07E4: get_model 2@ dimensions_cornerA_to 4@ 5@ 6@ dimensions_cornerB_to 7@ 8@ 9@
+        0013: 4@ *= -1.0
+        0407: store_coords_to 7@ 8@ 9@ from_car veh with_offset 4@ 0.0 0.0
+        00A0: store_actor $PLAYER_ACTOR position_to 4@ 5@ 6@   
+        050A: 3@ = distance_between_XYZ 4@ 5@ 6@ and_XYZ 7@ 8@ 9@
+        if  2.5 > 3@                                               
+        then
+            //0ACA: show_text_box "car found4"
+            break
+        end
+    end
+    {$I include/for_end}
+    if    
+    056E:   car veh defined                                    
+    then
+        0441: 21@ = car veh model
+        if or
+        21@ == 599
+        21@ == 523
+        21@ == 596
+        21@ == 597
+        21@ == 598
+        then
+            01C0: 22@ = player $PLAYER_CHAR wanted_level
+            if    3 > 22@
+            then
+                000A: 22@ += 1
+                010D: set_player $PLAYER_CHAR wanted_level_to 22@
+                
+            end
+        end
+        03F3: get_car veh primary_color_to 7@ secondary_color_to 8@
+        00AA: store_car veh position_to 4@ 5@ 6@
+        00A6: destroy_car veh
+        const 
+            //-+-- variables
+            BaseObj         = 23@
+        end
+        gosub @CreateBaseObjectCar
+        04ED: load_animation packAnim
+        038B: load_requested_models
+        wait 0
+        00AB: put_car veh at 4@ 5@ 6@
+        0812: AS_actor $PLAYER_ACTOR perform_animation liftCar IFP packAnim framedelta 4.0 loopA 0 lockX 1 lockY 1 lockF 0 time -1 // versionB
+        0393: actor $PLAYER_ACTOR perform_animation liftCar at 0.50 times_normal_rate
+        repeat
+            0613: 22@ = actor $PLAYER_ACTOR animation liftCar time
+         wait 0
+        until 22@ > 0.5
+        070A: AS_actor $PLAYER_ACTOR attach_to_object BaseObj offset 0.0 0.0 0.0 on_bone 6 16 perform_animation "NULL" IFP_file "NULL" time -1
+        0939: attach_car veh to_object BaseObj with_offset 0.7898 0.65 0.0 rotation 0.0 90.0 0.0
+        
+        0158: camera_on_car veh mode 18 switchstyle 1
+        09AD: set_vehicle_camera_mode 2
+        repeat
+            0613: 22@ = actor $PLAYER_ACTOR animation liftCar time
+         wait 0
+        until 22@ > 0.9
+        0812: AS_actor $PLAYER_ACTOR perform_animation IDLEHold IFP packAnim framedelta 5.0 loopA 1 lockX 1 lockY 1 lockF 1 time -1 // versionB
+        070B: set_actor $PLAYER_ACTOR onbone_attached_object_operation 0
+        069B: attach_object BaseObj to_actor $PLAYER_ACTOR with_offset 0.5 0.0959 0.8101 rotation -12.0 -90.0 50.0
+        08D2: object BaseObj scale_model 0.01
+        0750: set_object BaseObj visibility 0
+
+        {$I include/inloop}
+            0AB1: call_scm_func @setNewAngleDirectionPointCamera params 1 actor $PLAYER_ACTOR
+
+            00AA: store_car veh position_to 7@ 8@ 9@
+            0AB1: call_scm_func @getAimPoint 4 range 20.0 from 7@ 8@ 9@ camera_to 4@ 5@ 6@ point_to 1@ 2@ 3@ 
+            0AB1: call_scm_func @getLaserPoint 6 from 4@ 5@ 6@ to 1@ 2@ 3@ store_to 7@ 8@ 9@ 
+
+            //0AB1: call_scm_func @getScreenXYFrom3DCoords 3 coords_XYZ 7@ 8@ 9@ store_to 2@ 3@
+            {03F0: enable_text_draw 1 
+            038D: draw_texture 45 position 2@ 3@ size 20.0 20.0 RGBA 255 255 255 255 
+            03E3: set_texture_to_be_drawn_antialiased 1
+            038D: draw_texture 46 position 2@ 3@ size 20.0 20.0 RGBA 200 200 200 255 
+            03E3: set_texture_to_be_drawn_antialiased 1
+            }
+            04D5: create_corona_at 7@ 8@ 9@ radius 0.2 type 0 flare 0 RGB 0 255 0 
+            if  00E1:   player 0 pressed_key 17         /// ~k~~PED_FIREWEAPON~
+            then
+                0812: AS_actor $PLAYER_ACTOR perform_animation ThrowAnim IFP packAnim framedelta 18.0 loopA 0 lockX 1 lockY 1 lockF 1 time -1 // versionB
+                wait 0
+                repeat
+                    0613: 22@ = actor $PLAYER_ACTOR animation ThrowAnim time
+                 wait 0
+                until 22@ > 0.28555
+                00AA: store_car veh position_to 7@ 8@ 9@
+                0AB1: call_scm_func @getAimPoint 4 range 20.0 from 7@ 8@ 9@ camera_to 4@ 5@ 6@ point_to 1@ 2@ 3@ 
+                0AB1: call_scm_func @getLaserPoint 6 from 4@ 5@ 6@ to 1@ 2@ 3@ store_to 7@ 8@ 9@ 
+                00AA: store_car veh position_to 4@ 5@ 6@
+                0063: 7@ -= 4@ // (float) 
+                0063: 8@ -= 5@ // (float) 
+                0063: 9@ -= 6@ // (float)
+                0017: 7@ /= 9.0
+                0017: 8@ /= 9.0
+                0017: 9@ /= 9.0
+
+                0684: detach_car veh 0.0 0.0 0.0 collision_detection 0
+                break
+            end
+
+        {$I include/end}
+        02EB: restore_camera_with_jumpcut
+
+        099A: set_car veh collision_detection 1
+        01EC: make_car veh very_heavy 1
+        //070B: set_actor $PLAYER_ACTOR onbone_attached_object_operation 0
+        0682: detach_object BaseObj 0.0 0.0 0.0 collision_detection 0
+        0108: destroy_object BaseObj
+        07D5: set_car veh velocity_in_direction_XYZ 7@ 8@ 9@ rotation_velocitiesXY 1.0 0.0 unk -0.2
+        01C3: remove_references_to_car veh
+        32@ = 0
+        while 500 > 32@
+         wait 0
+        end
+        0792: disembark_instantly_actor $PLAYER_ACTOR
+        04EF: release_animation packAnim
+    end
+return
+
+:getScreenXYFrom3DCoords
+//0AB1: call_scm_func @getScreenXYFrom3DCoords 3 coords_XYZ 2488.562 -1666.865 12.8757 store_to 1@ 2@
+18@ = 1
+0A9F: 19@ = current_thread_pointer
+0AB1: call_scm_func @getLocalVarOffset 2 thread 19@ var 0 store_to 14@ // in => 0@-2@
+0AB1: call_scm_func @getLocalVarOffset 2 thread 19@ var 3 store_to 15@ // out => 3@-5@
+0AB1: call_scm_func @getLocalVarOffset 2 thread 19@ var 6 store_to 16@ // coords => 6@-8@
+0AB1: call_scm_func @getLocalVarOffset 2 thread 19@ var 9 store_to 17@
+0AB1: call_scm_func @getLocalVarOffset 2 thread 19@ var 12 store_to 18@
+0AA5: call 0x70CE30 num_params 6 pop 6 18@ 18@ 17@ 16@ 15@ 14@
+0AB1: call_scm_func @getFullScreenXY 2 coords_XY 3@ 4@ store_to 3@ 4@
+0AB2: ret 2 3@ 4@
+
+:getLocalVarOffset
+///0AB1: call_scm_func @getLocalVarOffset 2 thread 0@ var 0 store_to 1@ 
+if 
+ 0@ <> 0 
+then
+     1@ *= 0x4 
+     0A8E: 2@ = 0@ + 0xDC // mission flag
+     if 
+        2@ == 1 
+     then
+         1@ += 0xA48960 // mission locals
+     else
+         005A: 1@ += 0@ 
+         1@ += 0x3C 
+     end
+else
+     1@ = 0 
+end
+0AB2: ret 1 1@ 
+
+:getFullScreenXY
+///0AB1: call_scm_func @getFullScreenXY 2 coords_XY 320.0 224.0 store_to 1@ 2@
+2@ = 640.0 // screen X
+0A8D: 4@ = read_memory 0xC17044 size 4 virtual_protect 0 // full screen X
+0093: 4@ = integer 4@ to_float
+0073: 2@ /= 4@
+006B: 0@ *= 2@
+3@ = 448.0 // screen Y
+0A8D: 5@ = read_memory 0xC17048 size 4 virtual_protect 0 // full screen Y
+0093: 5@ = integer 5@ to_float
+0073: 3@ /= 5@
+006B: 1@ *= 3@
+0AB2: ret 2 0@ 1@
+
+:getAimPoint
+///0AB1: call_scm_func @getAimPoint 4 range 20.0 from 0.0 0.0 0.0 camera_to 1@ 2@ 3@ point_to 4@ 5@ 6@ 
+0A9F: 10@ = current_thread_pointer
+0AB1: call_scm_func @getLocalVarOffset 2 thread 10@ var 4 store_to 11@ 
+0AB1: call_scm_func @getLocalVarOffset 2 thread 10@ var 7 store_to 12@ 
+0AA6: call_method 0x514970 struct 0xB6F028 num_params 6 pop 0 pPoint 12@ pCamera 11@ fZ 3@ fY 2@ fX 1@ fRange 0@ 
+0AB2: ret 6 4@ 5@ 6@ 7@ 8@ 9@ 
+
+:getLaserPoint
+///0AB1: call_scm_func @getLaserPoint 6 from 0.0 0.0 0.0 to 1.0 0.0 0.0 store_to 1@ 2@ 3@ 
+0A96: 10@ = actor $PLAYER_ACTOR struct
+0AB1: call_scm_func @getIntPoint 12 from 0@ 1@ 2@ to 3@ 4@ 5@ solid 1 car 1 actor 1 object 1 particle 0 ignore_entity 10@ store_to 6@ 7@ 8@ distance_to 9@ 
+0AB1: call_scm_func @getActorBonePos 2 actor $PLAYER_ACTOR bone 25 store_to 0@ 1@ 2@ 
+if 
+06BD:  no_obstacles_between 0@ 1@ 2@ and 3@ 4@ 5@ solid 1 car 1 actor 1 object 1 particle 0 
+then
+ 0087: 6@ = 3@ 
+ 0087: 7@ = 4@ 
+ 0087: 8@ = 5@ 
+end
+0AB2: ret 3 6@ 7@ 8@ 
+
+:getIntPoint
+///0AB1: call_scm_func @getIntPoint 12 from 0.0 0.0 0.0 to 1.0 0.0 0.0 solid 1 car 0 actor 0 object 0 particle 0 ignore_entity 0x0 store_to 1@ 2@ 3@ distance_to 4@ 
+if 
+ 11@ <> 0x0 
+then
+ 0A8C: write_memory 0xB7CD68 size 4 value 11@ virtual_protect 0 
+end
+0A9F: 26@ = current_thread_pointer
+0AB1: call_scm_func @getLocalVarOffset 2 thread 26@ var 0 store_to 16@ // from => 0@-2@
+0AB1: call_scm_func @getLocalVarOffset 2 thread 26@ var 3 store_to 17@ // to => 3@-5@
+0AB1: call_scm_func @getLocalVarOffset 2 thread 26@ var 12 store_to 18@ // out => 12@-14@
+0AB1: call_scm_func @getLocalVarOffset 2 thread 26@ var 15 store_to 19@ // out => 15@
+0AA7: call_function 0x56BA00 num_params 12 pop 12 bIgnoreShootThroughStuff 0 bIgnoreSomeObjectsForCamera 0 bIgnoreSeeThroughStuff 0 bDummies 10@ bObject 9@ bActor 8@ bCar 7@ bBuilding 6@ fDistance 19@ pPoint 18@ pTarget 17@ pOrigin 16@ bReturn 20@ 
+if 
+ 11@ <> 0x0 
+then
+ 0A8C: write_memory 0xB7CD68 size 4 value 0 virtual_protect 0 
+end
+0AB1: call_scm_func @getLocalVarOffset 2 thread 26@ var 21 store_to 24@ // out => 21@-23@
+if 
+ 20@ <> 0 
+then
+ if and
+   12@ <> 0.0 
+   13@ <> 0.0 
+   14@ <> 0.0 
+ then
+   050A: 15@ = distance_between_XYZ 0@ 1@ 2@ and_XYZ 12@ 13@ 14@ 
+ end
+else
+ 15@ = 0.0 
+end
+0AB2: ret 4 12@ 13@ 14@ 15@ 
+
+:getActorBonePos
+///0AB1: call_scm_func @getActorBonePos 2 actor 0@ bone 0 store_to 1@ 2@ 3@ 
+0A96: 0@ = actor 0@ struct
+0A9F: 6@ = current_thread_pointer
+0AB1: call_scm_func @getLocalVarOffset 2 thread 6@ var 2 store_to 5@ 
+0AA6: call_method 0x5E4280 struct 0@ num_params 3 pop 0 bUnk 1 nBone 1@ pPoint 5@ 
+0AB2: ret 3 2@ 3@ 4@ 
+
+:setNewAngleDirectionPointCamera
+//0AB1: call_scm_func @setNewAngleDirectionPointCamera params 1 actor $PLAYER_ACTOR
+068E: get_camera_target_point_to 5@ 1@ 2@
+068D: get_camera_position_to 2@ 3@ 4@
+var
+    5@: float
+    1@: float
+    2@: float
+    3@: float
+end
+dec(5@, 2@)
+dec(1@, 3@)
+0604: get_Z_angle_for_point 5@ 1@ store_to 2@
+0173: set_actor 0@ Z_angle_to 2@ 
+0AB2: ret 0
+
+:CreateBaseObjectCar
+0247: load_model 21@
+0247: load_model 1582 //1598
+038B: load_requested_models
+0107: BaseObj = create_object 1582 at 0.0 0.0 -10.0
+0382: set_object BaseObj collision_detection 0
+04D9: object BaseObj set_scripted_collision_check 0
+08D2: object BaseObj scale_model 0.01
+0750: set_object BaseObj visibility 0
+00A5: veh = create_car 21@ at 0.0 0.0 -50.0
+0229: set_car veh primary_color_to 7@ secondary_color_to 8@
+099A: set_car veh collision_detection 0
+0224: set_car veh health_to 450
+0249: release_model 1582
+0249: release_model 21@
+return
+
